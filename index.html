@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en" ng-app>
+	<head>
+		<title>WorkFar MMORPG</title>
+		<meta charset="utf-8">
+		<style>
+		#world {z-index:1;width:1000px; height:600px;}
+		#hero {
+			position:absolute; 
+			left: 200px; 
+			top: 100px; 
+			width: 31px;
+			height: 52px;
+			z-index:10;
+			background: url("sprites/hero.jpg") 136px 208px;
+		}
+		.friend { 
+			position:absolute; 
+			left: 200px; 
+			top: 100px; 
+			width: 31px;
+			height: 52px;
+			z-index:10;
+			background: url("sprites/hero.jpg") 136px 208px;
+		}
+		audio {display: none;}
+		</style>
+		<script src="angular.min.js"></script>
+		<script src="jquery-1.10.2.js"></script>
+	</head>
+
+	<body>
+		<audio controls autoplay="autoplay">
+<source src="music/intro.mp3" type="audio/mpeg">
+</audio>
+
+		<img id='world' src='sprites/background.jpg' />
+		<div id='hero' animationFrame='1' direction='down'>
+
+		</div>
+		<ul id='messages'>
+
+		</ul>
+		<form id='send_message'>
+		<input type='text' id='message' />
+		</form>
+		<script type="text/javascript">
+		$(document).ready(function () {
+			var ws = new WebSocket("wss://workfar.com:1337/battle");
+			ws.onopen = function() {
+				$("body").focus();
+				$("body").bind('keydown', function(e) {
+					switch(e.keyCode) {
+						case 32:
+							$("#hero").animate({top: "-=30px"}).animate({top: "+=30px"});
+							break;
+						case 87: // up
+							switch( $("#hero").attr("animationFrame") ) {
+								case "1":
+									$("#hero").css("background-position", "32px 48px");
+									$("#hero").attr("animationFrame","2");
+									break;
+								case "2":
+									$("#hero").css("background-position", "100px 48px");
+									$("#hero").attr("animationFrame","1");
+									break;
+							}
+							$("#hero").css({top: "-=5px"});
+							ws.send(JSON.stringify({
+									x: $("#hero").css("top"),
+									y: $("#hero").css("left"),
+									direction: 87,
+									animationFrame: $("#hero").attr("animationFrame")
+							}));
+							break;
+						case 83: // down
+							switch( $("#hero").attr("animationFrame") ) {
+								case "1":
+									$("#hero").css("background-position", "32px 0px");
+									$("#hero").attr("animationFrame","2");
+									break;
+								case "2":
+									$("#hero").css("background-position", "100px 0px");
+									$("#hero").attr("animationFrame","1");
+									break;
+							}
+							$("#hero").css({top: "+=5px"});
+							ws.send(JSON.stringify({x: $("#hero").css("top"), y: $("#hero").css("left"), direction: 83, animationFrame: $("#hero").attr("animationFrame")}));
+							break;
+						case 65: // left
+							switch( $("#hero").attr("animationFrame") ) {
+								case "1":
+									$("#hero").css("background-position", "32px 156px");
+									$("#hero").attr("animationFrame","2");
+									break;
+								case "2":
+									$("#hero").css("background-position", "100px 156px");
+									$("#hero").attr("animationFrame","1");
+									break;
+							}
+							$("#hero").css({left: "-=5px"});
+							ws.send(JSON.stringify({x: $("#hero").css("top"), y: $("#hero").css("left"), direction: 65, animationFrame: $("#hero").attr("animationFrame")}));
+							break;
+						case 68: // right
+							switch( $("#hero").attr("animationFrame") ) {
+								case "1":
+									$("#hero").css("background-position", "32px 100px");
+									$("#hero").attr("animationFrame","2");
+									break;
+								case "2":
+									$("#hero").css("background-position", "100px 100px");
+									$("#hero").attr("animationFrame","1");
+									break;
+							}
+							$("#hero").css({left: "+=5px"});
+							ws.send(JSON.stringify({x: $("#hero").css("top"), y: $("#hero").css("left"), direction: 68, animationFrame: $("#hero").attr("animationFrame")}));
+							break;
+					}
+				});
+				$("#send_message").submit(function () { 
+					ws.send(JSON.stringify({command: "chat",message: $("#message").val()}))
+					return false;
+				});
+			};
+			ws.onmessage = function (evt)
+			{
+			    var message = $.parseJSON(evt.data);
+			    switch(message['command']) {
+			    	case 'new':
+			    		$("body").append("<div id='" + message['id'] + "' class='friend' animationFrame='1' direction='down'></div>");
+			    	break;
+			    	case 'move':
+			    		$("#" + message['id']).css({top: message['x'],left: message['y']});
+			    		switch(message['direction']) {
+						case 87: // up
+							switch( $("#" + message['id']).attr("animationFrame") ) {
+								case "1":
+									$("#" + message['id']).css("background-position", "32px 48px");
+									$("#" + message['id']).attr("animationFrame",message['animationFrame']);
+									break;
+								case "2":
+									$("#" + message['id']).css("background-position", "100px 48px");
+									$("#" + message['id']).attr("animationFrame",message['animationFrame']);
+									break;
+							}
+							break;
+						case 83: // down
+							switch( $("#" + message['id']).attr("animationFrame") ) {
+								case "1":
+									$("#" + message['id']).css("background-position", "32px 0px");
+									$("#" + message['id']).attr("animationFrame",message['animationFrame']);
+									break;
+								case "2":
+									$("#" + message['id']).css("background-position", "100px 0px");
+									$("#" + message['id']).attr("animationFrame",message['animationFrame']);
+									break;
+							}
+							break;
+						case 65: // left
+							switch( $("#" + message['id']).attr("animationFrame") ) {
+								case "1":
+									$("#" + message['id']).css("background-position", "32px 156px");
+									$("#" + message['id']).attr("animationFrame",message['animationFrame']);
+									break;
+								case "2":
+									$("#" + message['id']).css("background-position", "100px 156px");
+									$("#" + message['id']).attr("animationFrame",message['animationFrame']);
+									break;
+							}
+							break;
+						case 68: // right
+							switch( $("#" + message['id']).attr("animationFrame") ) {
+								case "1":
+									$("#" + message['id']).css("background-position", "32px 100px");
+									$("#" + message['id']).attr("animationFrame",message['animationFrame']);
+									break;
+								case "2":
+									$("#" + message['id']).css("background-position", "100px 100px");
+									$("#" + message['id']).attr("animationFrame",message['animationFrame']);
+									break;
+							}
+							break;
+					}
+			    	break;
+			    	case 'gone':
+			    		$("#" + message['id']).fadeOut();
+			    	break;
+			    	case 'chat':
+			    		$("#messages").append("<li>" + message['message'] + "</li>");
+			    	break;
+			    }
+			};
+			ws.onclose = function()
+			{
+			    ws.close();
+			};
+		});
+		</script>
+	</body>
+</html>
